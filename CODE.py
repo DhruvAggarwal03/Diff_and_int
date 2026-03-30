@@ -1,59 +1,52 @@
-# ---------------- CONSTANTS ----------------
 PI = 3.141592653589793
-
-# ---------------- BASIC FUNCTIONS ----------------
-def power(x, n):
-    result = 1
-    for _ in range(abs(n)):
-        result *= x
-    return result if n >= 0 else 1 / result
 
 def factorial(n):
     result = 1
-    for i in range(1, n+1):
+    for i in range (1, n+1):
         result *= i
+
     return result
 
-# ---------------- SIN & COS USING TAYLOR SERIES ----------------
+# sin and cos
+
 def sin(x):
-    x = x % (2 * PI)
+    x = x % (2*PI)
     result = 0
-    for n in range(10):
-        term = power(-1, n) * power(x, 2*n+1) / factorial(2*n+1)
+    for n in range(15):
+        term = pow(-1, n) * pow(x, 2*n+1)/ factorial(2*n+1)
         result += term
     return result
 
 def cos(x):
-    x = x % (2 * PI)
+    x = x % (2*PI)
     result = 0
-    for n in range(10):
-        term = power(-1, n) * power(x, 2*n) / factorial(2*n)
+    for n in range(15):
+        term = pow(-1, n) * pow(x, 2*n)/factorial(2*n)
         result += term
     return result
 
-# ---------------- TOKENIZER ----------------
+
 def tokenize(expr):
     tokens = []
     num = ""
     i = 0
-    
+
     while i < len(expr):
         if expr[i].isdigit() or expr[i] == '.':
             num += expr[i]
         else:
             if num:
                 tokens.append(float(num))
-                num = ""
+                num = ''
             if expr[i] != ' ':
                 tokens.append(expr[i])
         i += 1
-    
+
     if num:
         tokens.append(float(num))
-    
+
     return tokens
 
-# ---------------- PRECEDENCE ----------------
 def precedence(op):
     if op in ('+', '-'):
         return 1
@@ -61,40 +54,41 @@ def precedence(op):
         return 2
     return 0
 
-# ---------------- INFIX → POSTFIX ----------------
+
 def infix_to_postfix(tokens):
     output = []
     stack = []
-    
+
     for token in tokens:
         if isinstance(token, float):
             output.append(token)
-        
+
         elif token == '(':
             stack.append(token)
-        
+
         elif token == ')':
             while stack and stack[-1] != '(':
                 output.append(stack.pop())
             stack.pop()
         
-        elif token in ('+', '-', '*', '/'):
+        elif token in ('+','-','*','/'):
             while stack and precedence(stack[-1]) >= precedence(token):
                 output.append(stack.pop())
             stack.append(token)
-    
+
     while stack:
         output.append(stack.pop())
-    
+        
     return output
+    
 
-# ---------------- EVALUATE POSTFIX ----------------
 def evaluate_postfix(postfix):
     stack = []
-    
+
     for token in postfix:
         if isinstance(token, float):
             stack.append(token)
+        
         else:
             b = stack.pop()
             a = stack.pop()
@@ -107,10 +101,10 @@ def evaluate_postfix(postfix):
                 stack.append(a * b)
             elif token == '/':
                 stack.append(a / b)
-    
-    return stack[0]
 
-# ---------------- EXPRESSION EVALUATOR ----------------
+    return stack[0]
+    
+
 def evaluate(expr):
     expr = expr.replace("pi", str(PI))
     
@@ -127,13 +121,12 @@ def evaluate(expr):
     postfix = infix_to_postfix(tokens)
     return evaluate_postfix(postfix)
 
-# ---------------- DIFFERENTIATION ----------------
+
 def differentiate(expr, x):
     h = 0.0001
     return (evaluate(expr.replace("x", str(x + h))) - 
             evaluate(expr.replace("x", str(x)))) / h
 
-# ---------------- INTEGRATION ----------------
 def integrate(expr, a, b, n=1000):
     step = (b - a) / n
     total = 0
@@ -149,7 +142,7 @@ def integrate(expr, a, b, n=1000):
     
     return total
 
-# ---------------- MAIN LOOP ----------------
+#  MAIN LOOP 
 while True:
     print("\n1. Calculate")
     print("2. Differentiate")
