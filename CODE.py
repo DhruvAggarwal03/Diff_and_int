@@ -1,13 +1,177 @@
-from sympy import *
-x=symbols('x')
-expr_input=input('Enter an expression in terms of x : ')
-lower_limit=float(input('Enter lower limit of integration : '))
-upper_limit=float(input('Enter upper limit of integration : '))
-expr=sympify(expr_input)
-derivative=diff(expr,x)
-integration=integrate(expr,x)
-def_integration=integrate(expr,(x,lower_limit,upper_limit))
-print(f'''Original Function : {expr}
-Derivative : {derivative}
-Integration : {integration}
-Definite Integration : {def_integration}''')
+# ---------------- CONSTANTS ----------------
+PI = 3.141592653589793
+
+# ---------------- BASIC FUNCTIONS ----------------
+def power(x, n):
+    result = 1
+    for _ in range(abs(n)):
+        result *= x
+    return result if n >= 0 else 1 / result
+
+def factorial(n):
+    result = 1
+    for i in range(1, n+1):
+        result *= i
+    return result
+
+# ---------------- SIN & COS USING TAYLOR SERIES ----------------
+def sin(x):
+    x = x % (2 * PI)
+    result = 0
+    for n in range(10):
+        term = power(-1, n) * power(x, 2*n+1) / factorial(2*n+1)
+        result += term
+    return result
+
+def cos(x):
+    x = x % (2 * PI)
+    result = 0
+    for n in range(10):
+        term = power(-1, n) * power(x, 2*n) / factorial(2*n)
+        result += term
+    return result
+
+# ---------------- TOKENIZER ----------------
+def tokenize(expr):
+    tokens = []
+    num = ""
+    i = 0
+    
+    while i < len(expr):
+        if expr[i].isdigit() or expr[i] == '.':
+            num += expr[i]
+        else:
+            if num:
+                tokens.append(float(num))
+                num = ""
+            if expr[i] != ' ':
+                tokens.append(expr[i])
+        i += 1
+    
+    if num:
+        tokens.append(float(num))
+    
+    return tokens
+
+# ---------------- PRECEDENCE ----------------
+def precedence(op):
+    if op in ('+', '-'):
+        return 1
+    if op in ('*', '/'):
+        return 2
+    return 0
+
+# ---------------- INFIX → POSTFIX ----------------
+def infix_to_postfix(tokens):
+    output = []
+    stack = []
+    
+    for token in tokens:
+        if isinstance(token, float):
+            output.append(token)
+        
+        elif token == '(':
+            stack.append(token)
+        
+        elif token == ')':
+            while stack and stack[-1] != '(':
+                output.append(stack.pop())
+            stack.pop()
+        
+        elif token in ('+', '-', '*', '/'):
+            while stack and precedence(stack[-1]) >= precedence(token):
+                output.append(stack.pop())
+            stack.append(token)
+    
+    while stack:
+        output.append(stack.pop())
+    
+    return output
+
+# ---------------- EVALUATE POSTFIX ----------------
+def evaluate_postfix(postfix):
+    stack = []
+    
+    for token in postfix:
+        if isinstance(token, float):
+            stack.append(token)
+        else:
+            b = stack.pop()
+            a = stack.pop()
+            
+            if token == '+':
+                stack.append(a + b)
+            elif token == '-':
+                stack.append(a - b)
+            elif token == '*':
+                stack.append(a * b)
+            elif token == '/':
+                stack.append(a / b)
+    
+    return stack[0]
+
+# ---------------- EXPRESSION EVALUATOR ----------------
+def evaluate(expr):
+    expr = expr.replace("pi", str(PI))
+    
+    # handle sin and cos manually
+    if expr.startswith("sin("):
+        val = evaluate(expr[4:-1])
+        return sin(val)
+    
+    if expr.startswith("cos("):
+        val = evaluate(expr[4:-1])
+        return cos(val)
+    
+    tokens = tokenize(expr)
+    postfix = infix_to_postfix(tokens)
+    return evaluate_postfix(postfix)
+
+# ---------------- DIFFERENTIATION ----------------
+def differentiate(expr, x):
+    h = 0.0001
+    return (evaluate(expr.replace("x", str(x + h))) - 
+            evaluate(expr.replace("x", str(x)))) / h
+
+# ---------------- INTEGRATION ----------------
+def integrate(expr, a, b, n=1000):
+    step = (b - a) / n
+    total = 0
+    
+    for i in range(n):
+        x1 = a + i * step
+        x2 = a + (i + 1) * step
+        
+        y1 = evaluate(expr.replace("x", str(x1)))
+        y2 = evaluate(expr.replace("x", str(x2)))
+        
+        total += (y1 + y2) * step / 2
+    
+    return total
+
+# ---------------- MAIN LOOP ----------------
+while True:
+    print("\n1. Calculate")
+    print("2. Differentiate")
+    print("3. Integrate")
+    print("4. Exit")
+    
+    choice = input("Enter choice: ")
+    
+    if choice == '1':
+        expr = input("Enter expression: ")
+        print("Result:", evaluate(expr))
+    
+    elif choice == '2':
+        expr = input("Enter function in x: ")
+        x = float(input("Enter x: "))
+        print("Derivative:", differentiate(expr, x))
+    
+    elif choice == '3':
+        expr = input("Enter function in x: ")
+        a = float(input("Lower limit: "))
+        b = float(input("Upper limit: "))
+        print("Integral:", integrate(expr, a, b))
+    
+    elif choice == '4':
+        break
